@@ -1,4 +1,4 @@
-#保存数据plot中的特定数据
+#save data in the XRTplot
 def save_data(plot):
     dump = []
     x = plot.xaxis.binCenters

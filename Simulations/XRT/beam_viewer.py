@@ -1,5 +1,6 @@
 #read pickle file exported by XRT tracing file
 #for example: crlglobal2.export_beam('crlglobal2.pickle', fformat='pickle')
+
 import pickle
 import matplotlib.pyplot as plt
 pickleName = 'crlglobal2.pickle'

@@ -1,8 +1,6 @@
-#从xrt的追迹结果，提取光斑的宽度信息，并画图
-
+#from XRTplot, getting the information of the beam and plot defocus
 import matplotlib.pyplot as plt
 import numpy as np
-
 def defocus_plot(Plots, dqs): 
     plt.figure(figsize=(7, 5), dpi=72)
     ax1 = plt.subplot(111)
