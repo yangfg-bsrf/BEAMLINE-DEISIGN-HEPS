@@ -13,13 +13,13 @@ result1 = np.zeros([len(y),len(x)])
 for i in range(len(Ix)):
     result1[i,:] =np.array(Ix[i])
     
-#T1 = np.log(result1.T)
-T1 = result1.T
+T1 = np.log(result1.T)
+#T1 = result1.T
 z = z*1e3 
 x = x*1e3
 y = y*1e3
 
-vmin, vmax = 1e13, max(max(Iz))
+#vmin, vmax = 1e13, max(max(Iz))
 
 plt.figure(1)
 im =plt.imshow(T1, interpolation='bicubic', cmap='jet',
@@ -39,8 +39,8 @@ result2 = np.zeros([len(y),len(z)])
 for i in range(len(Iz)):
     result2[i,:] =np.array(Iz[i])
     
-#T2 = np.log(result2.T)
-T2 = result2.T
+T2 = np.log(result2.T)
+#T2 = result2.T
 plt.figure(2)
 im =plt.imshow(T2, interpolation='bicubic', cmap='jet',
                extent=[min(y),max(y),min(z),max(z)], aspect='auto')#,vmin=vmin, vmax=vmax)
