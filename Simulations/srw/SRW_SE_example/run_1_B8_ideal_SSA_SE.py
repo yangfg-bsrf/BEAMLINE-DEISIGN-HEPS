@@ -1,3 +1,6 @@
+﻿import os, sys
+sys.path.append(r".//SRW_base//")  #srw base 文件位置
+
 try:
     from oasys_srw.srwlib import *
     from oasys_srw.uti_plot import *
@@ -335,7 +338,7 @@ def caclcuation_SR(dx0):
     return arI1x, x0, arI1y, y0
 
 def main():
-    Position = numpy.linspace(-1000, 1000, 51)*1e-3
+    Position = numpy.linspace(-1000, 1000, 31)*1e-3
     image2Dx = []
     image2Dy = []
     x1D0 = numpy.linspace(-0.6,0.6,200)
