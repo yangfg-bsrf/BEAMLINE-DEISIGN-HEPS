@@ -9,17 +9,21 @@ In this project, we will include some data\examples\problems for the learners in
 
 ## (1) how to design the beamline and simulation experiment
 
-    > for specific issue, simulation and theoretical study are carried out and summaried;
-    > for specific beamline, series of simulation and study are done
+    for specific issue, simulation and theoretical study are carried out and summaried;
+
+    for specific beamline, series of simulation and study are done
 
 ## (2) how to program
 
-    > examples for HEPS beamline
-    > examples for data_analysis
-    > code for specific function, such as error generation(from Ansys, metrology), optical module with error, analysis module and so on
+    Examples for HEPS beamline
+
+    Examples for data_analysis
+
+    Codes for specific function, such as error generation(from Ansys, metrology), optical module with error, analysis module and so on
 
 ## (3) other resources
 
-    > HEPS parameters
-    > database for different error
+    HEPS parameters
+
+    Database for different kind of error
 
