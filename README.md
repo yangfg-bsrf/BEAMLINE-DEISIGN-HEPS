@@ -3,9 +3,9 @@
 
 This work relates to the beamline design work in High Energy Photon Source project since 2018.
 
-Different simulation software, including srw, xrt, SHADOW-OUI, SHADOW-Hybrid, are used in the different beamline performance estimation, we appreciate the software developer's work.
+Different simulation software, including SRW, XRT, SHADOW-OUI, SHADOW-Hybrid, are used in the different beamline performance estimation. They give us big help in the beamline design research. We appreciate the software developer's contribution.
 
-In this project, we will include some data\examples\problems for the learners in HEPS. We have not considered developing the professional software. 
+In this project, we will include some data\examples\problems for the people who want to do related work in HEPS.  
 
 ## how to design the beamline and simulation experiment
 
