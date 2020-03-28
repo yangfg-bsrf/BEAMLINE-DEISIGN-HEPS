@@ -7,23 +7,23 @@ Different simulation software, including srw, xrt, SHADOW-OUI, SHADOW-Hybrid, ar
 
 In this project, we will include some data\examples\problems for the learners in HEPS. We have not considered developing the professional software. 
 
-## (1) how to design the beamline and simulation experiment
+## how to design the beamline and simulation experiment
 
-    for specific issue, simulation and theoretical study are carried out and summaried;
+   (1) for specific issue, simulation and theoretical study are carried out and summarized;
 
-    for specific beamline, series of simulation and study are done
+   (2) for specific beamline, series of simulation and study are done
 
-## (2) how to program
+## how to program
 
-    Examples for HEPS beamline
+   (1) Examples for HEPS beamlines
 
-    Examples for data_analysis
+   (2) Examples for data_analysis
 
-    Codes for specific function, such as error generation(from Ansys, metrology), optical module with error, analysis module and so on
+   (3) Codes for specific function, such as error generation(from Ansys, metrology), optical module with error, analysis module and so on
 
-## (3) other resources
+## other resources
 
-    HEPS parameters
+   (1) HEPS parameters
 
-    Database for different kind of error
+   (2) Database for different kind of error
 
