@@ -16,7 +16,7 @@ x = []
 y = []
 z = [] 
 n = 14
-filename = "0401-2134-0.8-0.7mm-11.233pv+10min after.xyz"
+filename = "A0.xyz"
 with open(filename, "r") as f:
     reader = csv.reader(f, delimiter = ' ')
     for i, row in enumerate(reader):
