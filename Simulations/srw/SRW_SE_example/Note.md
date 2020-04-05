@@ -1,6 +1,6 @@
-## 如何使用SRW：核心是函数库的安装，及编程方式
+## 如何使用SRW？核心是函数库的安装，及编程方式
 
-### 1. 直接按照SRW python
+### 1. 直接安装SRW python
 
    <https://srwpy.github.io/srwpy/index.html>
    <https://github.com/srwpy/srwpy>
@@ -12,7 +12,7 @@
      >from srwpy.uti_plot import *
 
 
-### 2. 下载依赖库文件
+### 2. 库文件调用
 
    <https://github.com/ochubar/SRW>
 
@@ -23,7 +23,7 @@
     > from uti_plot import *
 
 
-### 3. 安装OASYS，基于OASYS_SRW生成代码，运行程序
+### 3. 使用OASYS_SRW生成代码，运行程序
 
 <https://www.aps.anl.gov/Science/Scientific-Software/OASYS>
    
@@ -31,7 +31,7 @@
     > from oasys_srw.srwlib import *
     > from oasys_srw.uti_plot import *
 
-### 4. 使用Sirepo
+### 4. 使用Sirepo生成代码
 
  <https://www.bnl.gov/ps/groups/rd/simulations/tools.php>
 
