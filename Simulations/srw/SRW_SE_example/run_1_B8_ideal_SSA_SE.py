@@ -353,7 +353,7 @@ def main():
         image2Dy.append(I1Dy0)
         print(i)
     dump = [x1D0, y1D0,Position, image2Dx, image2Dy]   
-    pickleName = '2D_section_B8_SSA.pickle'
+    pickleName = '2D_section.pickle'
     with open(pickleName, 'wb') as f:
         pickle.dump(dump, f, protocol=2)
 

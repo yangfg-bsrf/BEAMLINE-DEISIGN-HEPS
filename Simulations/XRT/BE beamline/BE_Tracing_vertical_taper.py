@@ -10,7 +10,9 @@
     指定文件路径输出
     修正KB镜参数设置
 2020.4.23：
-    修改为BE束线，开展几何追迹和波动计算
+    修改为BE束线
+2020.4.28：
+    修改为垂直偏转
     
 """
 __author__ = "Fugui Yang"
@@ -135,11 +137,11 @@ mode = 0
 if mode == 0:
     accept_ang_x, accept_ang_z = 40e-6, 40e-6 #亚微米模式
 else:
-    accept_ang_x, accept_ang_z = 5e-6, 5e-6 #微米聚焦模式
+    accept_ang_x, accept_ang_z = 10e-6, 1e-6 #微米聚焦模式
 E0, n0 = 8000, 1  # 插入间工作能量点，及谐波级次
-nrays, repeats = 5e5, 1
+nrays, repeats =5e4, 5000
 n1 = 1 # 待分析谐波级次
-#what = 'rays'
+# what = 'rays'
 what = 'hybrid'
 
 #器件误差设置
@@ -164,30 +166,31 @@ if True:
         uniformRayDensity = False
         filamentBeam = False
         isMono = False
-        prefix = 'B8-rays-'
+        prefix = 'BE-rays-'
     else:
         uniformRayDensity = True
         filamentBeam = True
         isMono = True
-        prefix = 'B8-hybr-'
+        prefix = 'BE-hybr-'
    
     dE = E1*0.001/2
     eMin0, eMax0 = E1-dE, E1+dE
     kwargs_SR = dict(
         nrays = nrays, center = [0, 0, 0],
         eE = 6.0, eI = 0.2, 
-#        eEspread = 0.00111,
-#        eEpsilonX = 0.02728, eEpsilonZ = 0.00276, 
-        eEspread = 0,
-        eEpsilonX = 0.00, eEpsilonZ = 0.00, 
+        eEspread = 0.00111,
+        eEpsilonX = 0.02728, eEpsilonZ = 0.00276, 
+        # eEspread = 0,
+        # eEpsilonX = 0.00, eEpsilonZ = 0.00, 
         betaX = 10.12, betaZ = 9.64,
         xPrimeMax = accept_ang_x, zPrimeMax = accept_ang_z,
         xPrimeMaxAutoReduce = False, zPrimeMaxAutoReduce = False,
-        targetE = [E0+123, n0], eMin = eMin0, eMax = eMax0,
+        #targetE = [E0+123, n0], 
+        eMin = eMin0, eMax = eMax0,
         uniformRayDensity = uniformRayDensity,
         filamentBeam = filamentBeam, period=32.7,n=152,
-        #K =  0.7576907940983183, taper(1.5,22.82838746))
-        K = r"auto")
+        K = 0.75769, taper=(4, 23.17))
+        #K = r"auto")
    
 
     beamLine = raycing.BeamLine(alignE=E0)
@@ -212,7 +215,6 @@ if True:
     kwargs_WMirr = dict(
             name='WhiteMirror',center=[0, p_WM, 0],
             pitch = theta_WM,
-            positionRoll = np.pi/2,
             material = Rh,
             limPhysX=[-1, 1],limPhysY=[-300, 300]) 
     if oe_error_WM==0:
@@ -237,13 +239,13 @@ if True:
     # fixedOffset = DCM_gap/np.sin(theta_DCM)*np.sin(2*(theta_DCM))
 
     p_DCM01 = p_DCM
-    DCM01x = (p_DCM01-p_WM)*np.tan(2*theta_WM)
-    DCM01z = 0
+    DCM01x = 0
+    DCM01z = (p_DCM01-p_WM)*np.tan(2*theta_WM)
     
-    DCM02z = fixedOffset
-    DCM02y = DCM_gap/np.sin(theta_DCM)*np.cos(2*(theta_DCM)) 
+    DCM02z = DCM01z + DCM_gap/np.sin(theta_DCM)*np.sin(2*(theta_DCM+theta_WM))
+    DCM02y = DCM_gap/np.sin(theta_DCM)*np.cos(2*(theta_DCM + theta_WM)) 
     p_DCM02 = p_DCM01 + DCM02y
-    DCM02x = (p_DCM02 - p_WM)*np.tan(2*theta_WM) 
+    DCM02x = 0 
 
     DCMDx,DCMDz = accept_ang_x*p_DCM/2*1.1, accept_ang_z*p_DCM/2/np.sin(theta_DCM)*1.1
 
@@ -251,12 +253,12 @@ if True:
     Surface_name= Error_path + 'DCM_'   
     kwargs_DCM01 = dict(
             name='DCM01',center=[DCM01x,p_DCM01, DCM01z],
-            pitch = theta_DCM,yaw = -2*theta_WM,
+            pitch = theta_DCM+theta_WM*2,
             material=crystalSi0n,
             limPhysX=[-DCMDx, DCMDx],limPhysY=[-DCMDz, DCMDz]) 
     kwargs_DCM02 = dict(
             name='DCM02',center=[DCM02x, p_DCM02, DCM02z],
-            pitch = -theta_DCM, yaw = -2*theta_WM,
+            pitch = -theta_DCM-theta_WM*2, 
             positionRoll=-np.pi,
             material=crystalSi0n,
             limPhysX=[-DCMDx, DCMDx],limPhysY=[-DCMDz, DCMDz])    
@@ -278,8 +280,8 @@ if True:
     dx_slitDCM, dz_slitDCM = p_slitDCM*40e-6, p_slitDCM*40e-6
     print(dx_slitDCM, dz_slitDCM)
     beamLine.slit_DCM = raycing.apertures.RectangularAperture(
-        beamLine, 'Slit_DCM',  [(p_slitDCM-p_WM)*np.tan(2*theta_WM), p_slitDCM,
-                                fixedOffset], 
+        beamLine, 'Slit_DCM',   [0, p_slitDCM,
+                                DCM02z + (p_slitDCM-p_DCM02)*np.tan(theta_WM*2)], 
                                 ('left', 'right', 'bottom', 'top'),
         [-dx_slitDCM/2, dx_slitDCM/2, -dz_slitDCM/2, dz_slitDCM/2])
 
@@ -288,15 +290,15 @@ if True:
     p_TM = 48000
     p_samp = p_TM + 8000
     theta_TM = 3e-3
-    TM_x = (p_TM-p_WM)*np.tan(2*theta_WM)
+    TM_z = DCM02z + (p_TM- p_DCM02)*np.tan(2*theta_WM)
    
     R_TM = 1/(1/p_TM+1/(p_samp -p_TM))*2/np.sin(theta_TM)
     r_TM = 1/(1/p_TM+1/(p_samp -p_TM))*2*np.sin(theta_TM)
     Surface_name= Error_path + 'TM_'
 
     kwargs_TM = dict(
-               name = 'TM',center = [TM_x, p_TM, fixedOffset],
-               pitch = -theta_TM, positionRoll = -np.pi/2,
+               name = 'TM',center = [0, p_TM, TM_z],
+               pitch = -theta_TM, positionRoll = -np.pi,
                material = Rh,
                limPhysX = [-1, 1], limPhysY = [-500, 500],
                R = R_TM, r = r_TM,
@@ -315,7 +317,7 @@ if True:
     p_imag = p_samp
     xs_slit,  zs_slit = 0.05, 0.05  
     beamLine.slitimag = ra.RectangularAperture(
-                    beamLine, 'Slit_image', [TM_x, p_imag, fixedOffset],
+                    beamLine, 'Slit_image', [0, p_imag, TM_z],
                     ('left', 'right', 'bottom', 'top'),
                     [-xs_slit/2, xs_slit/2, -zs_slit/2, zs_slit/2])     
 
@@ -330,7 +332,7 @@ if True:
     beamLine.fsmsamp = rsc.Screen(beamLine, 'samp')
     beamLine.fsmSecSlit = rsc.Screen(beamLine, 'SecSlit')
 
-    x_lim, z_lim = 30, 30
+    x_lim, z_lim = 20, 20
     edges = np.linspace(-x_lim, x_lim, xbins+1)*1e-3
     fsmExpX = (edges[:-1] + edges[1:]) * 0.5
     edges = np.linspace(-z_lim, z_lim, zbins+1)*1e-3
@@ -371,13 +373,13 @@ def run_process_rays(beamLine):
     #1. 样品附近多观察点屏
     beam_imags = []
     for i, dq in enumerate(dqs):
-        lsamp = [TM_x, p_samp+dq, fixedOffset]     
+        lsamp = [0, p_samp+dq, TM_z]     
         beamLine.fsmn.center = lsamp
         beam_imag = beamLine.fsmn.expose(TMGlobal)
         beam_imags.append(beam_imag)
 
     #2. 样品位置处
-    lsamp = [TM_x, p_samp, fixedOffset]   
+    lsamp = [0, p_samp, TM_z]   
     beamLine.slitimag.center = lsamp
     beamLine.slitimag.propagate(TMGlobal)
     beamLine.fsmsamp.center = lsamp
@@ -436,15 +438,15 @@ def run_process_hybr(beamLine):
     
     #HKB -> 样品处：波动传播
     #1. Single wave - 样品处-焦点
-    lsamp = [TM_x, p_samp, fixedOffset]   
-    beamLine.slitimag.center = lsamp
+    lsamp = [0, p_samp, TM_z]   
+    beamLine.fsmsamp.center = lsamp
     waveOnSample = beamLine.fsmsamp.prepare_wave(beamLine.TM, fsmExpX, fsmExpZ)
     rw.diffract(TMLocal, waveOnSample)
 
     #2. Waves array @ some porition
     waveOnImags = []
     for dq in dqs:  # prepare the wave
-        lsamp = [TM_x, p_samp+dq, fixedOffset]     
+        lsamp = [0, p_samp+dq, TM_z]     
         beamLine.fsmn.center = lsamp
         waveOnImag = beamLine.fsmn.prepare_wave(beamLine.TM, fsmExpX, fsmExpZ)
         rw.diffract(TMLocal, waveOnImag)
@@ -483,6 +485,8 @@ if Indicator_plot == 1:
                             limits=[eMin0-1, eMax0+1]),
         title='Source size'
         )
+    plot.xaxis.limits = [-30, 30]
+    plot.yaxis.limits = [-30, 30]  
     plot.baseName = plot.title
     plots.append(plot)
 
@@ -507,8 +511,8 @@ if Indicator_plot == 1:
     #DCM
     plot = xrtp.XYCPlot(
         'DCM', aspect='auto',
-        xaxis=xrtp.XYCAxis(r'$x$', unit=r"mm", bins=xbins, ppb=xppb),
-        yaxis=xrtp.XYCAxis(r'$z$', unit=r"mm", bins=zbins, ppb=zppb),
+        xaxis=xrtp.XYCAxis(r'$x$', unit=r"$\mu$m", bins=xbins, ppb=xppb),
+        yaxis=xrtp.XYCAxis(r'$z$', unit=r"$\mu$m", bins=zbins, ppb=zppb),
         caxis=xrtp.XYCAxis('energy', 'eV', offset=E0, limits=[eMin0-1, eMax0+1]),
         title='DCM02Global')    
     plot.baseName = plot.title
@@ -516,8 +520,8 @@ if Indicator_plot == 1:
     #TM
     plot = xrtp.XYCPlot(
         'TMLocal', aspect='auto',
-        xaxis=xrtp.XYCAxis(r'$x$', unit=r"mm", bins=xbins, ppb=xppb),
-        yaxis=xrtp.XYCAxis(r'$y$', unit=r"mm", bins=zbins, ppb=zppb),
+        xaxis=xrtp.XYCAxis(r'$x$', unit=r"$\mu$m", bins=xbins, ppb=xppb),
+        yaxis=xrtp.XYCAxis(r'$y$', unit=r"$\mu$m", bins=zbins, ppb=zppb),
         caxis=xrtp.XYCAxis('energy', 'eV', offset=E0, limits=[eMin0-1, eMax0+1]),
         title='TMLocal')    
     plot.baseName = plot.title
@@ -531,10 +535,10 @@ if Indicator_plot == 1:
         caxis=xrtp.XYCAxis('energy', 'eV', offset=E0, limits=[eMin0-1, eMax0+1]),
         title='Sample')    
     plot.baseName = plot.title
-    plots.append(plot)
     plot.xaxis.limits = [-x_lim, x_lim]
     plot.yaxis.limits = [-z_lim, z_lim]      
-    
+    plots.append(plot)
+   
     #Imags @ different position
     for i, dq in enumerate(dqs):
         plot = xrtp.XYCPlot(
