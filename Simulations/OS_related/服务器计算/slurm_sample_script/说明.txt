@@ -1,0 +1,15 @@
+
+slurm_cpu.sh
+sacct
+scancel
+
+source /afs/ihep.ac.cn/users/z/zhaohf/.bash_profile
+个人目录
+/afs/ihep.ac.cn/users/y/yangfg
+作业提交目录
+/workfs/heps/yangfg
+CPU存储目录
+/scratchfs/heps/yangfg
+GPU存储目录
+/hpcfs/heps/bldesign/yangfg
+
