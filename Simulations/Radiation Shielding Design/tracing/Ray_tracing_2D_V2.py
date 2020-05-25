@@ -5,9 +5,6 @@ import random
 from mpl_toolkits.axisartist.axislines import SubplotZero
 plt.rcParams['font.sans-serif']=['SimHei'] # 用来正常显示中文标签
 plt.rcParams['axes.unicode_minus']=False # 用来正常显示负号
-#原则性参数
-mr = 50
-residual_r = 30
 
 
 def pointu(pointa, pointb, x): #两点连线，确定y坐标
@@ -70,6 +67,10 @@ def plot_Radiation2(sr, Cs, x, aper): #画出所有的线，近画出分布特�
     #获得每个屏上的光线极限,步骤：1.把在同一平面截至的光线统计到一起，2.寻找边界光线
     
     for indexi in list(set(index0)):
+        if Cs[indexi].name == 'C5':
+            mr = mr1
+        else:
+            mr = mr2
         #1.把在同一平面截至的光线统计到一起
         yi = []
         xi = []
@@ -88,7 +89,7 @@ def plot_Radiation2(sr, Cs, x, aper): #画出所有的线，近画出分布特�
             plt.plot(xii,yii, 'k-' ,linewidth = linwidth1)
             if yi_max > aper[indexi][1]:
                 plt.plot([xii[-1], xii[-1]],[yii[-1], yii[-1] + mr],color = 'red',linewidth = 2)
-                Cs[indexi].wailunkuo = yii[-1] + mr - Cs[indexi].center[1]
+                Cs[indexi].wailunkuo = (yii[-1] + mr - Cs[indexi].center[1])*2
     
             yi_min = min(yi[:,-1])
             xii = xi[yi[:,-1] == yi_min][0]
@@ -96,14 +97,16 @@ def plot_Radiation2(sr, Cs, x, aper): #画出所有的线，近画出分布特�
             plt.plot(xii,yii, 'k-' ,linewidth = linwidth1)
             if yi_min < aper[indexi][0]:  
                 plt.plot([xii[-1], xii[-1]],[yii[-1], yii[-1] - mr],color = 'red',linewidth = 2)
-                Cs[indexi].wailunkuo = -yii[-1] + mr + Cs[indexi].center[1]
+                a0 = (-yii[-1] + mr + Cs[indexi].center[1])*2
+                if Cs[indexi].wailunkuo < a0:
+                    Cs[indexi].wailunkuo = a0
 
+            
         if indexi == (len(aper)-1):
             angle = np.rad2deg(np.arctan(yi[:,1]-yi[:,0])/(xi[:,1]-xi[:,0]))
             
     return angle
-            
-             
+                       
 def line_range(pointa, pointb, x_axis, apertures):  #横坐标x_axis，纵坐标y_axis   
     y_axis = pointu(pointa, pointb, x)
     x_min = [0]
@@ -115,7 +118,6 @@ def line_range(pointa, pointb, x_axis, apertures):  #横坐标x_axis，纵坐标
     y_axis_new = y_axis[(x_axis>=max(x_min))]# 
     
     return x_axis_new, y_axis_new
-
 
 def plot_Radiation_2p_range(point_a, point_b, x, apertures):
     x_new, y_new = line_range(point_a, point_b, x, apertures)
@@ -130,6 +132,10 @@ def plot_Radiation_range(C1, C2, x, apertures):
     plot_Radiation_2p_range(C1.point_rfc, C2.point_rbc, x, apertures)
     #plot_Radiation_2p_range(C1.point_lfc, C2.point_lbc, x, apertures)
     #plot_Radiation_2p_range(C1.point_lfc, C2.point_rbc, x, apertures)
+
+def plot_Radiation_range_wall(Ce, x, apertures):
+    plot_Radiation_2p_range(Ce.point_rfc, Ce.point_lbc, x, apertures)
+    plot_Radiation_2p_range(Ce.point_lfc, Ce.point_rbc, x, apertures)
 
 def plot_Radiation_range2(Ce, Cs, x, C_end, apertures):
     
@@ -161,7 +167,6 @@ def plot_Radiation_range2(Ce, Cs, x, C_end, apertures):
     angle = np.rad2deg(np.arctan(y_new[1]-y_new[0])/(x_new[1]-x_new[0]))
     return angle
         
-
 
 #%%光源
 class RSource(object):
@@ -202,8 +207,7 @@ class Collimator(object):
         self.apertureb = [self.center[1] - self.width/2, self.center[1] + self.width/2, self.center[0]]      
         self.aperturef = [self.center[1] - self.width/2, self.center[1] + self.width/2, self.center[0]+self.thickness]   
     def update_info(self):
-        self.info = self.name + ': inner = {0:.2f}mm'.format(self.width) + ', out = {0:.2f}mm'.format(self.wailunkuo*2 + self.width)
-        
+        self.info = self.name + ': inner = {0:.2f}mm'.format(self.width) + ', out = {0:.2f}mm'.format(self.wailunkuo)      
 
 #%%狭缝
 class Slit(object):
@@ -223,6 +227,7 @@ class Slit(object):
         #aperture的位置
         self.apertureb = [self.center[1] - self.width/2, self.center[1] + self.width/2, self.center[0]]     
 
+
 #%%反射镜
 class Mirror(object):
     #反射镜    
@@ -240,18 +245,23 @@ class Mirror(object):
         self.point_lbc = [self.center[0] - self.length*np.cos(self.pitch)/2, self.center[1] - self.width/2]
 
 #%%系统参数的定义
+#原则性参数
+mr1 = 30
+mr2 = 50
+residual_r = 30
+
 
 #%%辐射防护器件定义
 if True:
     fs_components = []         
-    ur = RSource([0, 0],40e-3, 'Undulator for BD') #插入件，位置和尺寸口径
+    ur = RSource([0, 0], 40e-3, 'Undulator for BD') #插入件，位置和尺寸口径
     sr = RSource([3e3, 0], 7.5, 'Source for BR')# 真空盒
-    C1 = Collimator([20.3e3 + sr.center[0], 0], 20, 100,300, 'C1')#位置、口径、厚度
-    C2 = Collimator([26.35e3 + sr.center[0], 0], 20, 65, 300, 'C2')#位置、口径、厚度
+    C1 = Collimator([20.3e3 + sr.center[0], 0], 20, 300, 300, 'C1')#位置、口径、厚度
+    C2 = Collimator([26.35e3 + sr.center[0], 0], 20, 150, 300, 'C2')#位置、口径、厚度
     C3 = Collimator([27.04e3 + sr.center[0], 0], 30, 100, 200, 'SS & C3')#位置、口径、厚度
     C4 = Collimator([27.8e3 + sr.center[0], 0], 20, 1000,700, 'Ratched Wall & C4')#位置、口径、厚度
-    C5 = Collimator([30.84e3 + sr.center[0], 0], 30, 100, 300, 'C5')#位置、口径、厚度  
-    C6 = Collimator([43e3, 46], 5, 120, 300, 'C6')#位置、口径、厚度、外轮廓宽度
+    C5 = Collimator([35.5e3, 0], 6, 95, 400, 'C5')#位置、口径、厚度  
+    C6 = Collimator([44.9e3-150, 54], 25, 200, 300, 'C6')#位置、口径、厚度、外轮廓宽度
     fs_components = [C1, C2, C4, C6] #准直器件组
     fs_components_all = [C1,C2,C3,C4,C5,C6]
     
@@ -273,36 +283,36 @@ if True:
     aper_WB = Slit([p_WB, 0], p_WB*angle_accep ,'White Beam Slit')
 
     #白光准直镜
-    theta_WM = 2e-3
+    theta_WM = 1.7e-3
     p_WBM = 36.5e3
     length = angle_accep*p_WBM/theta_WM
     WBM = Mirror([p_WBM, 0], length, theta_WM, 'white beam mirror')
 
     #单色器
-    p_DCM = 42.55e3
-    
-    theta_DCM = np.deg2rad(45)
-    fixedOffset = 20
-    DCM_gap = fixedOffset*np.sin(theta_DCM)/np.sin(2*(theta_DCM))
-    # DCM_gap = 5
-    # fixedOffset = DCM_gap/np.sin(theta_DCM)*np.sin(2*(theta_DCM))
+    theta_CCM = np.deg2rad(25)
+    # CCM
+    p_CCM = 40.5e3
+    CCM_gap = 8
+    fixedOffset = CCM_gap/np.sin(theta_CCM)*np.sin(2*(theta_CCM))
 
-    p_DCM01 = p_DCM
-    DCM01y = (p_DCM01-p_WBM)*np.tan(2*theta_WM) 
-    DCM02y = DCM01y + DCM_gap/np.sin(theta_DCM)*np.sin(2*(theta_DCM+theta_WM))
-    DCM02x = DCM_gap/np.sin(theta_DCM)*np.cos(2*(theta_DCM + theta_WM)) 
-    p_DCM02 = p_DCM01 + DCM02x
-    DCM01 = Mirror([p_DCM01, DCM01y], 30, theta_DCM + 2*theta_WM, 'DCM01')
-    DCM02 = Mirror([p_DCM02, DCM02y], 30, theta_DCM + 2*theta_WM, 'DCM02')
+    p_CCM01 = p_CCM
+    CCM01y = (p_CCM01-p_WBM)*np.tan(2*theta_WM) 
+    CCM02y = CCM01y + CCM_gap/np.sin(theta_CCM)*np.sin(2*(theta_CCM+theta_WM))
+    CCM02x = CCM_gap/np.sin(theta_CCM)*np.cos(2*(theta_CCM + theta_WM)) 
+    p_CCM02 = p_CCM01 + CCM02x
+    CCM01 = Mirror([p_CCM01, CCM01y], 30, theta_CCM + 2*theta_WM, 'CCM01')
+    CCM02 = Mirror([p_CCM02, CCM02y], 30, theta_CCM + 2*theta_WM, 'CCM02')
     
     #谐波镜HRM
     p_HRM = 45.9e3
-    theta_HRM = 2e-3
-    fixedOffset = 1
-    HRM_gap = fixedOffset*np.sin(theta_HRM)/np.sin(2*(theta_HRM))
-
+    theta_HRM = 1.7e-3
+    # fixedOffset = 6
+    # HRM_gap = fixedOffset*np.sin(theta_HRM)/np.sin(2*(theta_HRM))
+    HRM_gap = 3
+    fixedOffset = HRM_gap/np.sin(theta_HRM)*np.sin(2*(theta_HRM))
+    
     p_HRM01 = p_HRM
-    HRM01y = DCM02y + (p_HRM01-p_DCM02)*np.tan(2*theta_WM)  
+    HRM01y = CCM02y + (p_HRM01-p_CCM02)*np.tan(2*theta_WM)  
     HRM02y = HRM01y + HRM_gap/np.sin(theta_HRM)*np.sin(2*(theta_HRM+theta_WM))
     HRM02x = HRM_gap/np.sin(theta_HRM)*np.cos(2*(theta_HRM + theta_WM)) 
     p_HRM02 = p_HRM01 + HRM02x
@@ -313,7 +323,7 @@ if True:
     p_VFM = 48.9e3
     theta_VFM = 1.7e-3
     VFMy = HRM02y + (p_VFM-p_HRM02)*np.tan(2*theta_WM) 
-    VFM = Mirror([p_VFM, VFMy], 300, theta_HRM, 'HRM02')
+    VFM = Mirror([p_VFM, VFMy], 300, theta_VFM, 'VFM')
     
     #二次光源
     p_secslit= p_VFM + 4.5e3
@@ -322,20 +332,54 @@ if True:
     centers.append([0, 0])
     centers.append(aper_WB.center)    
     centers.append(WBM.center)
-    centers.append(DCM01.center)
-    centers.append(DCM02.center)
+    centers.append(CCM01.center)
+    centers.append(CCM02.center)
     centers.append(HRM01.center)
     centers.append(HRM02.center)  
     centers.append(VFM.center) 
     centers.append(secslit.center)
     
-    #画图参数
     xticks.append(aper_WB.center[0])
     xticks.append(WBM.center[0])
-    xticks.append(DCM01.center[0])
+    xticks.append(CCM01.center[0])
     xticks.append(HRM01.center[0])
-    xticks.append(VFM.center[0])    
+    xticks.append(HRM02.center[0])
+    xticks.append(VFM.center[0])  
+    
+    
+    # DCM
+    theta_DCM = theta_CCM
+    p_DCM = 42.55e3
+    fixedOffset = 20.5
+    DCM_gap = fixedOffset*np.sin(theta_DCM)/np.sin(2*(theta_DCM))
+    
+    p_DCM01 = p_DCM
+    DCM01y = (p_DCM01-p_WBM)*np.tan(2*theta_WM) 
+    DCM02y = DCM01y + DCM_gap/np.sin(theta_DCM)*np.sin(2*(theta_DCM+theta_WM))
+    DCM02x = DCM_gap/np.sin(theta_DCM)*np.cos(2*(theta_DCM + theta_WM)) 
+    p_DCM02 = p_DCM01 + DCM02x
+    DCM01 = Mirror([p_DCM01, DCM01y], 30, theta_DCM + 2*theta_WM, 'DCM01')
+    DCM02 = Mirror([p_DCM02, DCM02y], 30, theta_DCM + 2*theta_WM, 'DCM02')
+    #VFM镜
+    p_VFM = 48.9e3
+    theta_VFM = 1.7e-3
+    VFMy = DCM02y + (p_VFM-p_DCM02)*np.tan(2*theta_WM) 
+    VFM = Mirror([p_VFM, VFMy], 300, theta_VFM, 'VFM')    
+    
+    centers_DCM = []
+    centers_DCM.append([0, 0])
+    centers_DCM.append(aper_WB.center)    
+    centers_DCM.append(WBM.center)
+    centers_DCM.append(DCM01.center)
+    centers_DCM.append(DCM02.center)
+    centers_DCM.append(VFM.center) 
+    centers_DCM.append(secslit.center)
+    
+    xticks.append(DCM01.center[0])
+
+    #画图参数
     centers = np.array(centers)
+    centers_DCM = np.array(centers_DCM)
 
 #%%坐标轴设计
 if True:
@@ -390,24 +434,27 @@ if True:
             color_block = 'black'
         elif C.name == 'SS & C3':
             color_block = 'yellow'
-        elif C.name == 'C5':
-            color_block = 'yellow'
         else:
             color_block = 'blue'          
-        plt.gca().add_patch(plt.Rectangle((C.point_rbc[0], C.point_rbc[1]), C.thickness, C.wailunkuo, color = color_block))
-        plt.gca().add_patch(plt.Rectangle((C.point_lbc[0], C.point_lbc[1] - C.wailunkuo), C.thickness, C.wailunkuo, color = color_block))
+        plt.gca().add_patch(plt.Rectangle((C.point_rbc[0], C.point_rbc[1]), C.thickness, C.wailunkuo/2, color = color_block))
+        plt.gca().add_patch(plt.Rectangle((C.point_lbc[0], C.point_lbc[1] - C.wailunkuo/2), C.thickness, C.wailunkuo/2, color = color_block))
         plt.text(C.point_rbc[0]-400,y_limit[1]*0.6,"{}".format(C.name),fontdict={'size':'12','color':'b','rotation':'90'})            
 
     #%%光学器件
     #白光狭缝
     L = 20
-    plt.gca().add_patch(plt.Rectangle((aper_WB.point_rbc[0], aper_WB.point_rbc[1]), 300, L, color='gray'))
-    plt.gca().add_patch(plt.Rectangle((aper_WB.point_lbc[0], aper_WB.point_lbc[1] - L), 300, L, color='gray'))   
+    plt.gca().add_patch(plt.Rectangle((aper_WB.point_rbc[0]-150, aper_WB.point_rbc[1]), 300, L, color='gray'))
+    plt.gca().add_patch(plt.Rectangle((aper_WB.point_lbc[0]-150, aper_WB.point_lbc[1] - L), 300, L, color='gray'))   
     plt.text(aper_WB.point_lbc[0]-600,y_limit[1]*0.3,"White Slit",fontdict={'size':'12','color':'g','rotation':'90'}) 
     #白光镜
     plt.plot([WBM.point_lbc[0],WBM.point_rbc[0]], [WBM.point_lbc[1],WBM.point_rbc[1]],linewidth =2,color = 'gray')
     plt.text(WBM.point_lbc[0]-00,y_limit[1]*0.2,"WBM",fontdict={'size':'12','color':'g','rotation':'90'}) 
-    #单色器
+    #单色器CCM
+    plt.plot([CCM01.point_lbc[0],CCM01.point_rbc[0]], [CCM01.point_lbc[1],CCM01.point_rbc[1]],linewidth =2,color = 'g')
+    plt.plot([CCM02.point_lbc[0],CCM02.point_rbc[0]], [CCM02.point_lbc[1],CCM02.point_rbc[1]],linewidth =2,color = 'g')
+    plt.text(CCM02.point_lbc[0]-600,y_limit[1]*0.6,"CCM",fontdict={'size':'12','color':'g','rotation':'90'}) 
+    
+    #单色器DCM
     plt.plot([DCM01.point_lbc[0],DCM01.point_rbc[0]], [DCM01.point_lbc[1],DCM01.point_rbc[1]],linewidth =2,color = 'g')
     plt.plot([DCM02.point_lbc[0],DCM02.point_rbc[0]], [DCM02.point_lbc[1],DCM02.point_rbc[1]],linewidth =2,color = 'g')
     plt.text(DCM02.point_lbc[0]-600,y_limit[1]*0.6,"DCM",fontdict={'size':'12','color':'g','rotation':'90'}) 
@@ -420,27 +467,19 @@ if True:
     plt.text(VFM.point_lbc[0]-600,y_limit[1]*0.8,"VFM",fontdict={'size':'12','color':'g','rotation':'90'}) 
 
 #%%准直器画线 
-if True:  
-    #
-    #辐射追迹option1：画出所有线
-#    for C in fs_components:
-#        plot_Radiation(sr, C, x, apertures[0:4])
+if True:   
     #辐射追迹option2：画出部分光线
     angle1 = plot_Radiation2(sr, fs_components, x, apertures)
-    
     #从墙器件C4出发，投射光线  
-    angle2 = plot_Radiation_range2(C4, [C1, C2], x, C6, apertures[0:2])    
-    
+    angle2 = plot_Radiation_range2(C4, [C1, C2], x, C6, apertures[0:2])  
+    plot_Radiation_range_wall(C4, x, [C3.aperturef])
     #视场角
-    field_angle = max([max(angle1), angle2]) - min(angle1)
-        
-    # for C in [C1,C2,C3]:
-    #     plot_Radiation_range(C4, C, x, apertures[0:3])
-
+    field_angle = max([max(angle1), angle2]) - min(angle1)    
+    
 #%%画光轴,主要辅助光线
 if True:
-    plt.plot(centers[:,0], centers[:,1], 'r-', linewidth = 2)
-
+    plt.plot(centers[:,0], centers[:,1], 'k-', linewidth = 2)
+    plt.plot(centers_DCM[:,0], centers_DCM[:,1], 'r-', linewidth = 2)
     labelx = []
     for item in xticks:
         labelx.append('{0:.1f}m'.format(item*1e-3))         
@@ -448,50 +487,30 @@ if True:
     plt.grid(axis='x',linewidth = 0.2)
     ax.axis["x"].major_ticklabels.set_visible(False)
     plt.annotate(s='', xy=(VFM.center[0],VFM.center[1]), xytext=(VFM.center[0]+4e3,VFM.center[1]), arrowprops=dict(arrowstyle='<-',linewidth =2,color ='red'))
-    #plt.arrow(VFM.center[0], VFM.center[1], 4e3, 0,length_includes_head=True, head_width=0.2, lw=2) #画箭头方式2
 
-    plt.axhline(y = VFM.center[1]-25, color = 'k', linestyle = '--', linewidth = 1)
-    # plt.axvline(x = ur.center[0], color = 'k', linestyle = '--', linewidth = 2)
 
 #%%补充辅助信息
 if True:
-    text_positionx = 5e3
-    text_positiony = y_limit[1]*0.6
-    
+    text_positionx, text_positiony= 7e3, y_limit[1]*0.5
     text_indicator = 'Collimator Info:' + '\n' + '\n' + sr.info 
-    for C in [C1, C2, C3, C4, C6]:
-        if C.name == 'C1':
-            C.wailunkuo = 0
-        if C.name == 'C3':
-            C.wailunkuo = 0    
-        if C.name == 'C5':
-            C.wailunkuo = 0 
+    for C in [C1, C2, C3, C4, C5, C6]:
         C.update_info()
-        text_indicator = text_indicator+ '\n' + C.info
-    text_indicator = text_indicator+ '\n' + 'Field_angle = {0:.2f} Degree'.format(field_angle)
+        if C.name == C1.name:
+            C.info =   C.name + ': inner = {0:.2f}mm'.format(C.width) + ', out = inf'
+        # if C.name == C2.name:
+        #     C.info =   C.name + ': inner = {0:.2f}mm'.format(C.width) + ', out = 150mm'            
+        if C.name == C3.name:
+            C.info =   C.name + ': inner = {0:.2f}mm'.format(C.width) + ', out = 50mm'  
+        if C.name == C4.name:
+            C.info =   C.name + ': inner = {0:.2f}mm'.format(C.width) + ', out = inf'          
+        # if C.name == C5.name:
+        #     C.info =   C.name + ': inner = {0:.2f}mm'.format(C.width) + ', out = 135mm'
+        # if C.name == C6.name:
+        #     C.info =   C.name + ': inner = {0:.2f}mm'.format(C.width) + ', out = 230mm'   
+        text_indicator = text_indicator + '\n' + C.info
+    text_indicator = text_indicator+ '\n' + '\n' + 'Field_angle = {0:.2f} Degree'.format(field_angle)
     plt.text(text_positionx,text_positiony, text_indicator,color = 'black',  fontsize = 12,bbox={'facecolor':'green', 'alpha':0.5, 'pad':10})
 
 plt.show()
-plt.savefig('Radiation_protection.png', dpi =300)
+plt.savefig('Radiation_protection1.png', dpi =300)
 
-"""
-#    ax.spines['right'].set_color('black')
-#    ax.yaxis.set_label_position("right")
-#    ax.spines['top'].set_color('none')
-    #默认ax里面的x轴和y轴
-#    ax.xaxis.set_ticks_position('bottom')
-#    ax.yaxis.set_ticks_position('left')
-    #移动x轴y轴的位置
-#    ax.spines['bottom'].set_position(('data',0))#0,就是移到0的位置
-#    ax.spines['bottom'].set_linewidth(1.5)
-#    ax.spines['left'].set_position(('data',0))#0,就是移到0的位置
-#    ax.spines['left'].set_linewidth(1.5)
-
-#    #墙
-#    C = C4
-#    plt.gca().add_patch(plt.Rectangle((C.point_rbc[0], C.point_rbc[1]), C.thickness, L, color = 'black'))
-#    plt.gca().add_patch(plt.Rectangle((C.point_lbc[0], C.point_lbc[1] - L), C.thickness, L, color = 'black'))
-#    plt.text(C.point_rbc[0]-600,y_limit[1]*0.5,"{}".format(C.name),fontdict={'size':'12','color':'b','rotation':'90'})   
-
-
-"""
